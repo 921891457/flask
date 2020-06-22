@@ -1,6 +1,6 @@
-from flask import Flask,request
+from flask import Flask,request,make_response,render_template
 from flask_restful import  Api, Resource
-import mongo_client
+import mongo_client_two
 import json
 app = Flask(__name__)
 api = Api(app)
@@ -21,8 +21,19 @@ class api_new(Resource):
                for x in num:
                    if data.get(x) == None:#检验传入的参数是否存在以上的必须字段
                       return '该参数不存在必须在段{}'.format(x),404
-               db = mongo_client.client['foo']
+               db = mongo_client_two.client['foo']
                account = db['bar']
-               for x in data:
-                   account.update_one({x:data.get(x)})#采用字典更新的方法，防止存在通用的aaa字段
-api.add_resource(api_new,'/api/database/foo/bar')#注册路由
+               ac = account.find_one({'aaa': data.get('aaa')})
+               if ac:
+                   if data.get('aaa') == account.find_one({'aaa': data.get('aaa')})['aaa']:
+                       print(1)
+                       account.update_one(account.find_one({'aaa': data.get('aaa')}), {"$set": data})
+                   else:
+                       account.insert_one(data)
+               else:
+                   account.insert_one(data)
+        def get(self):
+            return make_response(render_template('hello.html'))
+api.add_resource(api_new,'/api/database/foo/bar/')#注册路由
+if __name__ =='__main__':
+    app.run(debug=True)
